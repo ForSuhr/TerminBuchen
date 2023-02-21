@@ -19,7 +19,7 @@ class TerminBuchenModel:
     def open_web(self):
         chromedriver = r".\chromedriver"
         self.driver = webdriver.Chrome(chromedriver)
-        URL = self.view.qle_http.text()
+        URL = self.view.qle_url.text()
         self.driver.get(URL)
 
     def buchen(self):
@@ -31,7 +31,7 @@ class TerminBuchenModel:
         self.buchen_event.clear()
 
     def get_current_url(self):
-        self.view.qle_http.setText(self.driver.current_url)
+        self.view.qle_url.setText(self.driver.current_url)
 
     def send_dgram(self):
         while True:
@@ -49,7 +49,7 @@ class TerminBuchenView(QWidget):
         self.btn_get_url = None
         self.btn_stop = None
         self.qle_delay = None
-        self.qle_http = None
+        self.qle_url = None
         self.btn_open_web = None
         self.btn_buchen = None
         self.initUI()
@@ -63,7 +63,7 @@ class TerminBuchenView(QWidget):
         hbox_r1 = QHBoxLayout()
         hbox_r2 = QHBoxLayout()
         ql_http = QLabel('Website', self)
-        self.qle_http = QLineEdit(self)
+        self.qle_url = QLineEdit(self)
         self.btn_open_web = QPushButton('Öffnen', self)
         self.btn_get_url = QPushButton('Get URL', self)
         self.btn_buchen = QPushButton('Buchen', self)
@@ -71,7 +71,7 @@ class TerminBuchenView(QWidget):
         ql_delay = QLabel('Delay in seconds', self)
         self.qle_delay = QLineEdit('30', self)
         hbox_r1.addWidget(ql_http)
-        hbox_r1.addWidget(self.qle_http)
+        hbox_r1.addWidget(self.qle_url)
         hbox_r1.addWidget(self.btn_open_web)
         hbox_r2.addWidget(ql_delay)
         hbox_r2.addWidget(self.qle_delay)
