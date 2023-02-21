@@ -15,6 +15,9 @@ class TerminBuchenModel:
         self.buchen_event = threading.Event()
         self.t = threading.Thread(target=self.send_dgram)
         self.t.start()
+        
+    def __del__(self):
+        self.driver.quit()
 
     def open_web(self):
         chromedriver = r".\chromedriver"
@@ -88,8 +91,8 @@ class TerminBuchenView(QWidget):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
+        self.move(qr.topLeft())  
+        
 
 class TerminBuchenController:
 
@@ -117,7 +120,7 @@ class TerminBuchenController:
         self.model.stop()
         self.view.btn_stop.setEnabled(False)
         self.view.btn_buchen.setEnabled(True)
-
+        
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
