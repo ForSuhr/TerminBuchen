@@ -1,0 +1,9 @@
+# User-specific files
+*.spec
+
+# Build results
+**/build/
+**/dist/
+
+# Visual Studio cache/options directory
+/.idea/
