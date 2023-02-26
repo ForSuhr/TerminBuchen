@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QVBoxLayout, \
-    QHBoxLayout, QLineEdit, QPushButton, QLabel
+    QHBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
+from PyQt5.QtGui import QRegularExpressionValidator
+from PyQt5.QtCore import QRegularExpression
 import threading
 import sys
 from selenium import webdriver
@@ -8,47 +10,59 @@ from time import sleep
 
 class TerminBuchenModel:
 
-    def __init__(self, view):
+    def __init__(self, controller):
+        self.controller = controller
         self.delay = None
         self.driver = None
-        self.view = view
         self.buchen_event = threading.Event()
-        self.t = threading.Thread(target=self.send_dgram)
-        self.t.start()
+        self.keep_running = True
         
     def __del__(self):
-        self.driver.quit()
+        if self.driver is not None:
+            self.driver.quit()
 
     def open_web(self):
         chromedriver = r".\chromedriver"
         self.driver = webdriver.Chrome(chromedriver)
-        URL = self.view.qle_url.text()
+        URL = self.controller.view.qle_url.text()
         self.driver.get(URL)
 
     def buchen(self):
-        qle_delay = self.view.qle_delay.text()
+        qle_delay = self.controller.view.qle_delay.text()
         self.delay = int(qle_delay)
         self.buchen_event.set()
 
     def stop(self):
         self.buchen_event.clear()
+        self.driver.quit()
 
     def get_current_url(self):
-        self.view.qle_url.setText(self.driver.current_url)
+        try:
+            self.controller.view.qle_url.setText(self.driver.current_url)
+        except ConnectionAbortedError('Fail to request.'):
+            pass
 
     def send_dgram(self):
-        while True:
+        while self.keep_running:
             state = self.buchen_event.isSet()
             if state:
-                self.driver.execute_script('document.getElementById("applicationForm:managedForm:proceed").click()')
-                sleep(self.delay)
-                self.get_current_url()
+                try:
+                    self.driver.execute_script('document.getElementById("applicationForm:managedForm:proceed").click()')
+                except ConnectionAbortedError('Fail to request.'):
+                    pass
+                finally:
+                    sleep(self.delay)
+                    self.get_current_url()
 
 
 class TerminBuchenView(QWidget):
 
-    def __init__(self):
+    def __init__(self, controller):
         super().__init__()
+        self.msg_no_browser = None
+        self.controller = controller
+        self.validator_url = None
+        self.msg_invalid_url = None
         self.btn_get_url = None
         self.btn_stop = None
         self.qle_delay = None
@@ -56,6 +70,9 @@ class TerminBuchenView(QWidget):
         self.btn_open_web = None
         self.btn_buchen = None
         self.initUI()
+
+    def closeEvent(self, event):
+        self.controller.model.keep_running = False
 
     def initUI(self):
         self.setWindowTitle("Termin Buchen")
@@ -67,7 +84,14 @@ class TerminBuchenView(QWidget):
         hbox_r2 = QHBoxLayout()
         ql_http = QLabel('Website', self)
         self.qle_url = QLineEdit(self)
+        self.validator_url = QRegularExpressionValidator(self)
+        self.validator_url.setRegularExpression(QRegularExpression("^(http|https)://.*$"))
         self.btn_open_web = QPushButton('Öffnen', self)
+        self.qle_url.setValidator(self.validator_url)
+        self.msg_invalid_url = QMessageBox()
+        self.msg_invalid_url.setText('Invalid URL')
+        self.msg_no_browser = QMessageBox()
+        self.msg_no_browser.setText('No browser opened')
         self.btn_get_url = QPushButton('Get URL', self)
         self.btn_buchen = QPushButton('Buchen', self)
         self.btn_stop = QPushButton('Stop', self)
@@ -85,8 +109,6 @@ class TerminBuchenView(QWidget):
         mainLayout.addLayout(hbox_r1)
         mainLayout.addLayout(hbox_r2)
 
-        self.show()
-
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
@@ -96,20 +118,30 @@ class TerminBuchenView(QWidget):
 
 class TerminBuchenController:
 
-    def __init__(self, model, view):
-        self.model = model
-        self.view = view
+    def __init__(self):
+        self.view = TerminBuchenView(self)
+        self.model = TerminBuchenModel(self)
+
         self.view.btn_open_web.clicked.connect(self.on_btn_open_web_clicked)
         self.view.btn_buchen.clicked.connect(self.on_btn_buchen_clicked)
         self.view.btn_stop.clicked.connect(self.on_btn_stop_clicked)
         self.view.btn_stop.setEnabled(False)
         self.view.btn_get_url.clicked.connect(self.on_btn_get_url_clicked)
 
+        self.t = threading.Thread(target=self.model.send_dgram)
+        self.t.start()
+
     def on_btn_open_web_clicked(self):
-        self.model.open_web()
+        if self.view.qle_url.hasAcceptableInput():
+            self.model.open_web()
+        else:
+            self.view.msg_invalid_url.exec()
 
     def on_btn_get_url_clicked(self):
-        self.model.get_current_url()
+        if self.model.driver is not None:
+            self.model.get_current_url()
+        else:
+            self.view.msg_no_browser.exec()
 
     def on_btn_buchen_clicked(self):
         self.model.buchen()
@@ -120,11 +152,11 @@ class TerminBuchenController:
         self.model.stop()
         self.view.btn_stop.setEnabled(False)
         self.view.btn_buchen.setEnabled(True)
-        
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    termin_buchen_view = TerminBuchenView()
-    termin_buchen_model = TerminBuchenModel(termin_buchen_view)
-    termin_buchen_controller = TerminBuchenController(termin_buchen_model, termin_buchen_view)
+    termin_buchen_controller = TerminBuchenController()
+    termin_buchen_controller.view.show()
     sys.exit(app.exec_())
+    pass
