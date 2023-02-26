@@ -1,9 +1,6 @@
 # TerminBuchen
 A gadget designed to make online appointments at the website of LEA Berlin.
 
-## Requirement
-Make sure you have installed `Chrome` under Windows.
-
 ## Quick Start
 Go to https://otv.verwalt-berlin.de/ams/TerminBuchen, fill out all terms and click "Weiter". If you found the warning "Für die gewählte Dienstleistung sind aktuell keine Termine frei! Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut", then just copy paste the url to the gadget, then click "Öffnen" and wait until the site loads, and finally click "Buchen". This tool will click on "Weiter" every 30 seconds automatically for you(30 is the default, but you can change it if your website comes out faster).
 
