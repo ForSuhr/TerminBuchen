@@ -8,3 +8,6 @@ Go to https://otv.verwalt-berlin.de/ams/TerminBuchen, fill out all terms and cli
 Due to the server's rule, you will have to refill the terms manually every 30 minutes. So this gadget can only help you for 30 minutes continuously.
 
 Last but not least, stay low and enjoy it!
+
+## Dependencies
+[chromedriver](https://chromedriver.chromium.org/downloads)
